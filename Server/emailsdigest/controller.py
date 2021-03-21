@@ -63,15 +63,22 @@ def label_email(email, app):
 
     # iterate over similarity for last email.
     index = 0
+    labels = []
     for similarities in pairwise_similarities[-1]:		
         if index == len(emails_str) - 1:
             continue
 
         # check if any bucket email crosses threshold and assign same label
         if (1 - similarities) <= app.threshold:
-            return emails[index].label, False
+            labels.append(emails[index].label)
 
         index += 1
+    
+    if len(labels) == 1:
+        return labels[0], False
+    elif len(labels) > 1:
+        return merge_labels(labels), False
+        
     # if email is unique assign new label
     return uuid.uuid1(), True
 
@@ -92,3 +99,11 @@ def check_params(param_list, query_params):
             if query_params.get(param) is None:
                 return False
         return True
+
+def merge_labels(labels):
+    if len(labels) <= 1:
+        return
+    else:
+        leader_label = labels.pop()
+        models.Email.objects.filter(label__in=labels).update(label=leader_label)
+    return leader_label
