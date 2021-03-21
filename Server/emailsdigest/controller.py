@@ -78,7 +78,7 @@ def label_email(email, app):
         return labels[0], False
     elif len(labels) > 1:
         return merge_labels(labels), False
-        
+
     # if email is unique assign new label
     return uuid.uuid1(), True
 
@@ -101,8 +101,10 @@ def check_params(param_list, query_params):
         return True
 
 def merge_labels(labels):
-    if len(labels) <= 1:
-        return
+    if len(labels) == 0:
+        raise Exception('Empty label list passed.')
+    elif len(labels) == 1:
+        return labels[0]
     else:
         leader_label = labels.pop()
         models.Email.objects.filter(label__in=labels).update(label=leader_label)
