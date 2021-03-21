@@ -1,4 +1,8 @@
+import datetime
+
 from django.db import models
+from django.utils import timezone
+
 
 class Application(models.Model):
     """Class to keep configs of application"""
@@ -25,3 +29,8 @@ class Email(models.Model):
 
     def __str__(self):
         return f'{str(self.label)} -- {self.created} -- {self.subject}'
+
+    def is_ripe(self):
+        now = timezone.now()
+        return self.created + datetime.timedelta(
+                    minutes=self.app.duration) <= now

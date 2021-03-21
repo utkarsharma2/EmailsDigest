@@ -36,6 +36,20 @@ class Command(BaseCommand):
         print(f"step 2 - Got {len(list(pending_emails))} emails.")
 
 
+        # merging diverged labels
+        grouped_apps = set()
+        is_merged = False
+        for email in pending_emails:
+            if email.app.name not in grouped_apps\
+                and ( email.is_ripe() or options['force']):
+                if controller.merge_leaders_emails(email.app):
+                    is_merged = True
+                    print("Merged diverged labels: ", email.app)
+                grouped_apps.add(email.app.name)
+
+        if is_merged: 
+            pending_emails = list(models.Email.objects.filter(is_sent=False, is_leader=True)[:settings.MAX_EMAIL_SEND_LIMIT])
+
         print("step 3 - Preparing grpuping dict")
         # Prepare grouping on - app, label
         grouped_emails = {}
@@ -51,13 +65,10 @@ class Command(BaseCommand):
         print("step 4 - Preparing email digest")
         for app_emails in grouped_emails.values():
             for label_email in app_emails.values():
-                if label_email.created + datetime.timedelta(
-                    minutes=label_email.app.duration) <= now or options['force']:
-                    
+                if label_email.is_ripe() or options['force']:
                     
                     batch_emails = models.Email.objects.filter(
                         app=label_email.app, label=label_email.label)
-
 
                     # send emails
                     controller.send_email(

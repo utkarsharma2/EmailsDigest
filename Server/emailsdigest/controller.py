@@ -82,6 +82,52 @@ def label_email(email, app):
     # if email is unique assign new label
     return uuid.uuid1(), True
 
+def prepare_labels_for_merge(app):
+    emails = list(get_emails_bucket(app))
+    emails_str = [format_email(x.subject, x.body) for x in emails]
+
+    pairwise_similarities = cal_TFIDF(emails_str)
+    
+    email_index_x = 0
+    email_index_y = 0
+    list_of_sets = []
+    for emails_similarities in pairwise_similarities:
+        email_index_x = 0
+        for similarities in emails_similarities:
+            if email_index_x == email_index_y:
+                continue
+            
+            if (1 - similarities) <= app.threshold:
+                
+                match = False
+                for _set in list_of_sets:
+                    if  emails[email_index_x].label in _set \
+                         or emails[email_index_y].label in _set:
+
+                        _set.update([
+                            emails[email_index_y].label,
+                            emails[email_index_x].label
+                        ])
+                        match = True
+
+                if not match:
+                    list_of_sets.append(set([
+                        emails[email_index_y].label,
+                        emails[email_index_x].label
+                    ]))
+    
+            email_index_x += 1
+        email_index_y += 1
+
+    return list_of_sets
+
+def merge_leaders_emails(app):
+    list_of_labels = prepare_labels_for_merge(app)
+    is_merged = False
+    for labels in list_of_labels:
+        merge_labels(list(labels))
+        is_merged = True
+    return is_merged
 
 def send_email(subject, body, to):
     """Send email"""
@@ -107,5 +153,5 @@ def merge_labels(labels):
         return labels[0]
     else:
         leader_label = labels.pop()
-        models.Email.objects.filter(label__in=labels).update(label=leader_label)
+        models.Email.objects.filter(label__in=labels, is_sent=False).update(label=leader_label)
     return leader_label
