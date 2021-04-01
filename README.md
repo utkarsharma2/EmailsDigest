@@ -1,6 +1,6 @@
 # EmailsDigest
 ## Introduction
-   A webserver to convert bulk emails to more managable form. **[More Info](https://utkarsharma2.medium.com/adding-meaning-back-to-alert-emails-db6b44aa24b4)**
+   A webserver to convert bulk emails to more managable form. **[More Info](https://rationalize.tech/machine-learning-project/how-to-reduce-email-overload-with-the-help-of-machine-learning/)**
 ## Setup
     - Prerequisite
       - Pyhton3
